@@ -1,132 +1,38 @@
 # File System Scanner mit RabbitMQ Integration
 
-Ein robustes Python-Programm, das ein lokales Dateisystem rekursiv durchsucht und für jede gefundene Datei eine Nachricht mit Metadaten an eine RabbitMQ-Queue sendet.
+Ein Python-Programm, das ein lokales Dateisystem rekursiv durchsucht und für jede gefundene Datei eine Nachricht mit Metadaten an eine RabbitMQ-Queue sendet.
 
 Entwickelt als Lösung für die Coding-Challenge von **NorCom Information Technology GmbH**.
 
 ---
 
-## 📋 Inhaltsverzeichnis
+## Inhaltsverzeichnis
 
 1. [Funktionen](#funktionen)
-2. [Architektur](#architektur)
-3. [Voraussetzungen](#voraussetzungen)
-4. [Installation](#installation)
-5. [Schnellstart](#schnellstart)
-6. [Verwendung](#verwendung)
-7. [Nachrichten überprüfen](#nachrichten-überprüfen)
-8. [Konfiguration](#konfiguration)
+2. [Installation](#installation)
+3. [Schnellstart](#schnellstart)
+4. [Verwendung](#verwendung)
+5. [Nachrichten überprüfen](#nachrichten-überprüfen)
+6. [Konfiguration](#konfiguration)
 
 ---
 
-## ✨ Funktionen
+## Funktionen
 
-- ✅ **Rekursive Verzeichnisdurchsuchung** mit `os.walk()` (Python Standard Library)
-- ✅ **Memory-efficient**: Konstanter Speicherverbrauch auch bei Millionen von Dateien
-- ✅ **Stabil bei großen Strukturen**: Generator-basierte Iteration verhindert Speicherüberlauf
-- ✅ **Robuste Fehlerbehandlung**: Berechtigungsfehler, fehlende Dateien, Netzwerkprobleme
-- ✅ **RabbitMQ-Verbindung mit Auto-Reconnect**: Automatische Wiederverbindung bei Ausfall
-- ✅ **Connection Health Monitoring**: Verhindert Timeouts bei mehrstündigen Scans
-- ✅ **Publisher Confirms**: Garantierte Nachrichtenzustellung ohne Verlust
-- ✅ **Detaillierte Datei-Metadaten**: Größe, Zeitstempel, optional SHA256-Hash
-- ✅ **Filterung nach Dateitypen**: Nur bestimmte Extensions scannen
-- ✅ **Umfassendes Logging**: Console + File Logging mit verschiedenen Levels
-- ✅ **Vollständig konfigurierbar**: Alle Parameter über CLI steuerbar
+- Rekursive Verzeichnisdurchsuchung mit `os.walk()` (Python Standard Library)
+- Memory-efficient: Konstanter Speicherverbrauch auch bei Millionen von Dateien
+- Stabil bei großen Strukturen: Generator-basierte Iteration verhindert Speicherüberlauf
+- Robuste Fehlerbehandlung: Berechtigungsfehler, fehlende Dateien, Netzwerkprobleme
+- RabbitMQ-Verbindung mit Auto-Reconnect: Automatische Wiederverbindung bei Ausfall
+- Connection Health Monitoring: Verhindert Timeouts bei mehrstündigen Scans
+- Publisher Confirms: Garantierte Nachrichtenzustellung ohne Verlust
+- Detaillierte Datei-Metadaten: Größe, Zeitstempel, optional SHA256-Hash
+- Filterung nach Dateitypen: Nur bestimmte Extensions scannen
+- Umfassendes Logging: Console + File Logging mit verschiedenen Levels
+- Vollständig konfigurierbar: Alle Parameter über CLI steuerbar
 
 ---
-
-## 🏗️ Architektur
-
-### Modulare Struktur nach SOLID-Prinzipien
-
-Das Programm folgt dem **Single Responsibility Principle** - jede Komponente hat genau eine Aufgabe:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    file_scanner.py                          │
-│              (Main Orchestrator / Entry Point)              │
-│  - Koordiniert den Gesamtablauf                             │
-│  - Dependency Injection                                     │
-│  - CLI Argument Parsing                                     │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-         ┌───────────┼───────────┐
-         │           │           │
-         ▼           ▼           ▼
-┌────────────┐ ┌────────────┐ ┌──────────────────┐
-│ rabbitmq_  │ │  file_info │ │  directory_      │
-│ client.py  │ │ _extractor │ │  scanner.py      │
-│            │ │    .py     │ │                  │
-│ - Connect  │ │ - Extract  │ │ - os.walk()      │
-│ - Publish  │ │   metadata │ │ - Iterate files  │
-│ - Reconnect│ │ - Hash     │ │ - Statistics     │
-│ - Health   │ │ - Format   │ │ - Error handling │
-└────────────┘ └────────────┘ └──────────────────┘
-                     │
-                     ▼
-              ┌─────────────┐
-              │ logger_     │
-              │ config.py   │
-              │             │
-              │ - Setup     │
-              │ - Formatters│
-              └─────────────┘
-```
-
-### Projektstruktur
-
-```
-file-scanner/
-├── 📄 Core Application
-│   ├── file_scanner.py              # Hauptprogramm (Orchestrator)
-│   ├── rabbitmq_client.py           # RabbitMQ-Verbindung
-│   ├── file_info_extractor.py       # Datei-Metadaten-Extraktion
-│   ├── directory_scanner.py         # Verzeichnis-Traversierung
-│   └── logger_config.py             # Logging-Konfiguration
-│
-├── 🔧 Utility Tools
-│   ├── read_messages.py             # Nachrichten lesen (Batch)
-│   ├── stress_test.py               # Performance-Test
-│
-├── ⚙️ Configuration
-│   ├── requirements.txt             # Python Dependencies
-│   ├── docker-compose.yml           # RabbitMQ Setup
-│   └── .gitignore                   # Git Ignore Rules
-│
-└── 📚 Documentation
-    ├── README.md                    # Diese Datei
-    ├── STABILITY.md                 # Stabilitäts-Details
-    └── QUICKSTART.md                # Schnellreferenz
-```
----
-
-## 📦 Voraussetzungen
-
-### Software-Anforderungen
-
-| Software | Version | Zweck |
-|----------|---------|-------|
-| **Python** | 3.7+ | Programmiersprache |
-| **pip** | Latest | Package Manager |
-| **Docker** | 20.10+ | Container Runtime |
-| **Docker Compose** | 1.29+ | Multi-Container Orchestration |
-
-### Installation prüfen
-
-```bash
-# Python Version prüfen
-python --version
-# Sollte zeigen: Python 3.7.x oder höher
-
-# pip prüfen
-pip --version
-
-# Docker prüfen
-docker --version
-docker-compose --version
-```
-
-## 🚀 Installation
+## Installation
 
 ### Schritt 1: Projekt herunterladen
 
@@ -151,7 +57,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**Was wird installiert:**
+Was wird installiert:
 - `pika==1.3.2` - RabbitMQ Client Library
 
 ### Schritt 3: RabbitMQ starten
@@ -168,27 +74,16 @@ docker-compose ps
 # file_scanner_rabbitmq   Up        0.0.0.0:5672->5672/tcp, 0.0.0.0:15672->15672/tcp
 ```
 
-**RabbitMQ Zugang:**
-- **AMQP Port**: `localhost:5672` (für Programm)
-- **Management UI**: `http://localhost:15672` (für Web-Interface)
-- **Username**: `guest`
-- **Password**: `guest`
-
-### Schritt 4: Installation verifizieren
-
-```bash
-# Testen ob alles funktioniert
-cd src
-python file_scanner.py --help
-
-# Sollte die Hilfe anzeigen ohne Fehler
-```
+RabbitMQ Zugang:
+- AMQP Port: `localhost:5672` (für Programm)
+- Management UI: `http://localhost:15672` (für Web-Interface)
+- Username: `guest`
+- Password: `guest`
 
 ---
 
-## ⚡ Schnellstart
+## Schnellstart
 
-### 5-Minuten-Test
 
 ```bash
 # 1. RabbitMQ starten
@@ -205,15 +100,15 @@ cd src
 python file_scanner.py --input-dirs test_files
 
 # 4. Nachrichten prüfen
-cd ..
-cd utils
+cd ../utils
 python read_messages.py --count 3
 
 # 5. Aufräumen
 rm -rf test_files
 ```
 
-**Erwartete Ausgabe:**
+Erwartete Ausgabe:
+
 ```
 2025-12-02 13:50:56 - INFO - Starting scan of: /Users/ichan-yeong/IdeaProjects/rabbit-mq/test_files
 2025-12-02 13:50:56 - INFO - Connecting to RabbitMQ at localhost:5672 (attempt 0/3)
@@ -228,7 +123,7 @@ rm -rf test_files
 
 ---
 
-## 🎯 Verwendung
+## Verwendung
 
 ### file_scanner.py - Hauptprogramm
 
@@ -242,25 +137,12 @@ python file_scanner.py --input-dirs directory_name [OPTIONS]
 
 | Argument        | Typ    | Standard | Pflicht | Beschreibung |
 |-----------------|--------|----------|---------|--------------|
-| `--input-dirs`  | String | -        | ✅ Ja   | Ein oder mehrere Verzeichnispfade, die gescannt werden sollen. Unterstützt mehrere Repositories, z. B.  (`repo1 repo2 repo3`). |
-
-
-#### Optionale Parameter
-
-| Parameter | Typ | Standard | Beschreibung |
-|-----------|-----|----------|--------------|
-| `--rabbitmq-host` | String | `localhost` | RabbitMQ Hostname oder IP |
-| `--rabbitmq-port` | Integer | `5672` | RabbitMQ AMQP Port |
-| `--rabbitmq-user` | String | `guest` | RabbitMQ Benutzername |
-| `--rabbitmq-password` | String | `guest` | RabbitMQ Passwort |
-| `--queue-name` | String | `file_scan_queue` | Name der RabbitMQ Queue |
-| `--calculate-hash` | Flag | `False` | SHA256-Hash für Dateien <100MB berechnen |
-| `--extensions` | List | Alle | Nur bestimmte Dateierweiterungen scannen |
-| `--log-level` | Choice | `DEBUG` | Logging Level: DEBUG, INFO, WARNING, ERROR |
+| `--input-dirs`  | String | -        | Ja      | Ein oder mehrere Verzeichnispfade, die gescannt werden sollen. Unterstützt mehrere Repositories (`repo1 repo2 repo3`). |
 
 #### Beispiele
 
-**Mit allen Optionen:**
+Mit allen Optionen:
+
 ```bash
 python file_scanner.py --input-dirs test_files \
   --rabbitmq-host localhost \
@@ -273,24 +155,14 @@ python file_scanner.py --input-dirs test_files \
   --log-level DEBUG
 ```
 
-
-**Entfernter RabbitMQ Server:**
-```bash
-python file_scanner.py --input-dirs test_files \
-  --rabbitmq-host 192.168.1.100 \
-  --rabbitmq-user admin \
-  --rabbitmq-password secret123
-```
-
-
-**Log-Datei:** `file_scanner.log`
+Log-Datei: `file_scanner.log`
 - Enthält detaillierte Logs für Debugging
 - Wird automatisch erstellt
 - Rotiert nicht automatisch (manuell löschen bei Bedarf)
 
 ---
 
-## 📨 Nachrichten überprüfen
+## Nachrichten überprüfen
 
 ### read_messages.py - Nachrichten lesen
 
@@ -304,44 +176,28 @@ python read_messages.py [OPTIONS]
 
 | Parameter | Typ | Standard | Beschreibung |
 |-----------|-----|----------|--------------|
-| `--host` | String | `localhost` | RabbitMQ Hostname |
-| `--port` | Integer | `5672` | RabbitMQ Port |
-| `--user` | String | `guest` | RabbitMQ Benutzername |
-| `--password` | String | `guest` | RabbitMQ Passwort |
 | `--queue` | String | `file_scan_queue` | Queue Name |
 | `--count` | Integer | `10` | Anzahl zu lesender Nachrichten |
 | `--acknowledge` | Flag | `False` | Nachrichten nach Lesen aus Queue entfernen |
 
 #### Beispiele
 
-**Standard - 10 Nachrichten lesen (bleiben in Queue):**
+Standard - 10 Nachrichten lesen (bleiben in Queue):
+
 ```bash
 python read_messages.py
 ```
 
-**5 Nachrichten lesen:**
+5 Nachrichten lesen:
+
 ```bash
 python read_messages.py --count 5
 ```
 
-**Nachrichten lesen UND entfernen:**
+Nachrichten lesen UND entfernen:
+
 ```bash
 python read_messages.py --count 10 --acknowledge
-```
-
-
-**Von anderer Queue lesen:**
-```bash
-python read_messages.py --queue my_custom_queue --count 20
-```
-
-**Von entferntem Server:**
-```bash
-python read_messages.py \
-  --host 192.168.1.100 \
-  --user admin \
-  --password secret123 \
-  --count 5
 ```
 
 #### Ausgabe
@@ -382,18 +238,17 @@ Note: Messages were not removed from queue (use --acknowledge flag to remove)
 ```bash
 # Browser öffnen
 open http://localhost:15672  # macOS
-xdg-open http://localhost:15672  # Linux
-start http://localhost:15672  # Windows
-
 # Login: guest / guest
 # Navigation: Queues → file_scan_queue → Get messages
 ```
 
-## 🔧 Konfiguration
+---
+
+## Konfiguration
 
 ### RabbitMQ Konfiguration
 
-**docker-compose.yml** anpassen:
+docker-compose.yml anpassen:
 
 ```yaml
 version: '3.8'
@@ -415,29 +270,11 @@ services:
 ```
 
 Dann Programm mit neuen Credentials starten:
+
 ```bash
 python file_scanner.py /path \
   --rabbitmq-user myuser \
   --rabbitmq-password mypassword
 ```
----
-
-## 🤝 Support
-
-Bei Fragen oder Problemen:
-
-1. **Logs prüfen**: `file_scanner.log` und `docker-compose logs`
-2. **GitHub Issues**: (falls öffentliches Repository)
-3. **Email**: chan9908181@gmail.com (für NorCom-Bewerbung)
-
----
-
-## 📄 Lizenz
-
-Dieses Projekt wurde als Coding-Challenge für **NorCom Information Technology GmbH** erstellt.
-
-**Entwickler:** Chan-Young Lee  
-**Datum:** Dezember 2025
-**Kontakt:** chan9908181@gmail.com
 
 ---
