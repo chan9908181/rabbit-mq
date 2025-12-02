@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+test_files/
+test_files1/
+test_files2/
