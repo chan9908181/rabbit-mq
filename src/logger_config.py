@@ -6,7 +6,7 @@ import sys
 import logging
 
 
-def setup_logging(level: str = 'INFO', log_file: str = 'file_scanner.log'):
+def setup_logging(level: str = 'DEBUG', log_file: str = 'file_scanner.log'):
     """
     Configure logging for the application.
     

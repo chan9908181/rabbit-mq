@@ -16,8 +16,6 @@ Entwickelt als Lösung für die Coding-Challenge von **NorCom Information Techno
 6. [Verwendung](#verwendung)
 7. [Nachrichten überprüfen](#nachrichten-überprüfen)
 8. [Konfiguration](#konfiguration)
-9. [Tests](#tests)
-10. [Fehlerbehebung](#fehlerbehebung)
 
 ---
 
@@ -180,6 +178,7 @@ docker-compose ps
 
 ```bash
 # Testen ob alles funktioniert
+cd src
 python file_scanner.py --help
 
 # Sollte die Hilfe anzeigen ohne Fehler
@@ -202,9 +201,12 @@ echo "Test content 2" > test_files/test2.pdf
 echo "Test content 3" > test_files/test3.jpg
 
 # 3. Scanner ausführen
-python file_scanner.py test_files
+cd src
+python file_scanner.py --input-dirs test_files
 
 # 4. Nachrichten prüfen
+cd ..
+cd utils
 python read_messages.py --count 3
 
 # 5. Aufräumen
@@ -213,10 +215,15 @@ rm -rf test_files
 
 **Erwartete Ausgabe:**
 ```
-2024-12-02 10:00:00 - INFO - Connecting to RabbitMQ at localhost:5672
-2024-12-02 10:00:00 - INFO - Successfully connected to RabbitMQ
-2024-12-02 10:00:00 - INFO - Starting scan of directory: test_files
-2024-12-02 10:00:01 - INFO - Scan completed. Processed: 3, Failed: 0, Skipped: 0
+2025-12-02 13:50:56 - INFO - Starting scan of: /Users/ichan-yeong/IdeaProjects/rabbit-mq/test_files
+2025-12-02 13:50:56 - INFO - Connecting to RabbitMQ at localhost:5672 (attempt 0/3)
+2025-12-02 13:50:56 - INFO - Successfully connected to RabbitMQ
+2025-12-02 13:50:56 - INFO - Starting scan of directory: /Users/ichan-yeong/IdeaProjects/rabbit-mq/test_files
+2025-12-02 13:50:56 - DEBUG - Published: test1.txt
+2025-12-02 13:50:56 - DEBUG - Published: test2.pdf
+2025-12-02 13:50:56 - DEBUG - Published: test3.jpg
+2025-12-02 13:50:56 - INFO - Scan completed. Processed: 3, Failed: 0, Skipped: 0
+2025-12-02 13:50:56 - INFO - RabbitMQ connection closed
 ```
 
 ---
@@ -228,14 +235,15 @@ rm -rf test_files
 #### Syntax
 
 ```bash
-python file_scanner.py <DIRECTORY> [OPTIONS]
+python file_scanner.py --input-dirs directory_name [OPTIONS]
 ```
 
 #### Argumente
 
-| Argument | Typ | Standard | Pflicht | Beschreibung |
-|----------|-----|----------|---------|--------------|
-| `directory` | String | - | ✅ Ja | Pfad zum zu scannenden Verzeichnis |
+| Argument        | Typ    | Standard | Pflicht | Beschreibung |
+|-----------------|--------|----------|---------|--------------|
+| `--input-dirs`  | String | -        | ✅ Ja   | Ein oder mehrere Verzeichnispfade, die gescannt werden sollen. Unterstützt mehrere Repositories, z. B.  (`repo1 repo2 repo3`). |
+
 
 #### Optionale Parameter
 
@@ -248,18 +256,13 @@ python file_scanner.py <DIRECTORY> [OPTIONS]
 | `--queue-name` | String | `file_scan_queue` | Name der RabbitMQ Queue |
 | `--calculate-hash` | Flag | `False` | SHA256-Hash für Dateien <100MB berechnen |
 | `--extensions` | List | Alle | Nur bestimmte Dateierweiterungen scannen |
-| `--log-level` | Choice | `INFO` | Logging Level: DEBUG, INFO, WARNING, ERROR |
+| `--log-level` | Choice | `DEBUG` | Logging Level: DEBUG, INFO, WARNING, ERROR |
 
 #### Beispiele
 
-**Basis-Scan:**
-```bash
-python file_scanner.py ~/Documents
-```
-
 **Mit allen Optionen:**
 ```bash
-python file_scanner.py /data/archive \
+python file_scanner.py --input-dirs test_files \
   --rabbitmq-host localhost \
   --rabbitmq-port 5672 \
   --rabbitmq-user guest \
@@ -270,48 +273,15 @@ python file_scanner.py /data/archive \
   --log-level DEBUG
 ```
 
-**Nur bestimmte Dateitypen:**
-```bash
-# Nur PDF und Word-Dokumente
-python file_scanner.py ~/Documents --extensions .pdf .docx
-
-# Nur Bilder
-python file_scanner.py ~/Pictures --extensions .jpg .png .gif .jpeg
-
-# Nur Text-Dateien
-python file_scanner.py ~/Code --extensions .py .java .cpp .h
-```
-
-**Mit Hash-Berechnung:**
-```bash
-python file_scanner.py ~/important_files --calculate-hash
-```
-
-**Debug-Modus:**
-```bash
-python file_scanner.py ~/test --log-level DEBUG
-```
 
 **Entfernter RabbitMQ Server:**
 ```bash
-python file_scanner.py /data \
+python file_scanner.py --input-dirs test_files \
   --rabbitmq-host 192.168.1.100 \
   --rabbitmq-user admin \
   --rabbitmq-password secret123
 ```
 
-#### Ausgabe
-
-**Console Output:**
-```
-2024-12-02 10:00:00 - INFO - Connecting to RabbitMQ at localhost:5672
-2024-12-02 10:00:00 - INFO - Successfully connected to RabbitMQ
-2024-12-02 10:00:00 - INFO - Starting scan of directory: /home/user/documents
-2024-12-02 10:00:15 - INFO - Progress: 100 processed, 0 failed, 5 skipped
-2024-12-02 10:00:30 - INFO - Progress: 200 processed, 0 failed, 8 skipped
-2024-12-02 10:01:00 - INFO - Scan completed. Processed: 347, Failed: 0, Skipped: 12
-2024-12-02 10:01:00 - INFO - RabbitMQ connection closed
-```
 
 **Log-Datei:** `file_scanner.log`
 - Enthält detaillierte Logs für Debugging
@@ -359,10 +329,6 @@ python read_messages.py --count 5
 python read_messages.py --count 10 --acknowledge
 ```
 
-**Alle Nachrichten konsumieren:**
-```bash
-python read_messages.py --count 1000 --acknowledge
-```
 
 **Von anderer Queue lesen:**
 ```bash
@@ -423,18 +389,6 @@ start http://localhost:15672  # Windows
 # Navigation: Queues → file_scan_queue → Get messages
 ```
 
-### Alternative: Live Consumer (Echtzeit)
-
-```bash
-# Zeigt Nachrichten in Echtzeit an
-python live_consumer.py
-
-# Mit Options
-python live_consumer.py --queue file_scan_queue --acknowledge
-```
-
----
-
 ## 🔧 Konfiguration
 
 ### RabbitMQ Konfiguration
@@ -466,283 +420,6 @@ python file_scanner.py /path \
   --rabbitmq-user myuser \
   --rabbitmq-password mypassword
 ```
-
-### Logging Konfiguration
-
-Im Code anpassen (`logger_config.py`):
-
-```python
-# Log-Level für Console
-console_handler.setLevel(logging.INFO)  # Ändern zu DEBUG, WARNING, etc.
-
-# Log-Level für Datei
-file_handler.setLevel(logging.DEBUG)  # Immer alles loggen
-
-# Log-Datei Name
-file_handler = logging.FileHandler('custom_name.log')
-```
-
----
-
-## 🧪 Tests
-
-### Manueller Test
-
-```bash
-# Test-Dateien erstellen
-mkdir -p test_files
-for i in {1..100}; do
-  echo "Test content $i" > test_files/file_$i.txt
-done
-
-# Scanner ausführen
-python file_scanner.py test_files
-
-# Ergebnisse prüfen
-python read_messages.py --count 100
-
-# Aufräumen
-rm -rf test_files
-```
-
-### Stress-Test (Große Verzeichnisse)
-
-```bash
-# Erstellt ~10,000 Dateien und scannt sie
-python stress_test.py
-```
-
-**Was der Stress-Test macht:**
-1. Erstellt automatisch große Verzeichnisstruktur (10k+ Dateien)
-2. Führt Scanner aus
-3. Misst Performance (Dateien/Sekunde)
-4. Prüft Stabilität
-5. Räumt automatisch auf
-
-**Erwartetes Ergebnis:**
-```
-Created 10000 files in 15.23 seconds
-Scan completed in 25.67 seconds
-Throughput: 389.54 files/second
-✅ STRESS TEST PASSED
-```
-
-### Unit-Tests
-
-```bash
-# Einzelne Module testen
-python test_file_info_extractor.py
-```
-
-### Integration Test
-
-```bash
-# Vollständiger Workflow-Test
-docker-compose up -d
-python file_scanner.py test_files --log-level DEBUG
-python read_messages.py --count 10
-docker-compose down
-```
-
----
-
-## 🐛 Fehlerbehebung
-
-### Problem: "Connection refused" / "Could not connect to RabbitMQ"
-
-**Ursache:** RabbitMQ läuft nicht
-
-**Lösung:**
-```bash
-# Status prüfen
-docker-compose ps
-
-# Wenn nicht running:
-docker-compose up -d
-
-# Logs prüfen
-docker-compose logs rabbitmq
-
-# Warten bis bereit (dauert ~10 Sekunden)
-docker-compose logs -f rabbitmq | grep "Server startup complete"
-```
-
-### Problem: "Permission denied" beim Scannen
-
-**Ursache:** Keine Leserechte für Dateien/Verzeichnisse
-
-**Lösung:**
-```bash
-# Option 1: Mit sudo ausführen (Vorsicht!)
-sudo python file_scanner.py /root
-
-# Option 2: Nur zugängliche Verzeichnisse scannen
-python file_scanner.py ~/Documents  # Statt /root
-```
-
-### Problem: "ModuleNotFoundError: No module named 'pika'"
-
-**Ursache:** Dependencies nicht installiert
-
-**Lösung:**
-```bash
-# Virtual Environment aktivieren (falls verwendet)
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate     # Windows
-
-# Dependencies neu installieren
-pip install -r requirements.txt
-
-# Verifizieren
-pip list | grep pika
-```
-
-### Problem: Scanner hängt / keine Ausgabe
-
-**Ursache:** Sehr große Dateien oder langsames Dateisystem
-
-**Lösung:**
-```bash
-# Debug-Modus aktivieren für mehr Details
-python file_scanner.py /path --log-level DEBUG
-
-# Hash-Berechnung deaktivieren (falls aktiv)
-python file_scanner.py /path  # Ohne --calculate-hash
-
-# Kleineres Verzeichnis testen
-python file_scanner.py ~/Documents/subset
-```
-
-### Problem: RabbitMQ Management UI nicht erreichbar
-
-**Ursache:** Port nicht exposed oder Container nicht running
-
-**Lösung:**
-```bash
-# Container Status prüfen
-docker-compose ps
-
-# Ports prüfen
-docker port file_scanner_rabbitmq
-
-# Container neu starten
-docker-compose restart rabbitmq
-
-# Browser Cache leeren und neu versuchen
-# Chrome: Ctrl+Shift+R
-# Firefox: Ctrl+F5
-```
-
-### Problem: Zu viele Nachrichten in Queue
-
-**Ursache:** Messages werden nicht konsumiert
-
-**Lösung:**
-```bash
-# Option 1: Alle Nachrichten lesen und löschen
-python read_messages.py --count 10000 --acknowledge
-
-# Option 2: Queue über Web UI purgen
-# http://localhost:15672 → Queues → file_scan_queue → Purge Messages
-
-# Option 3: Queue löschen und neu erstellen
-docker exec file_scanner_rabbitmq rabbitmqctl delete_queue file_scan_queue
-docker exec file_scanner_rabbitmq rabbitmqctl add_queue file_scan_queue
-```
-
-### Problem: Zu wenig Speicherplatz
-
-**Ursache:** RabbitMQ speichert Messages auf Disk
-
-**Lösung:**
-```bash
-# Docker Volumes prüfen
-docker system df
-
-# RabbitMQ Daten löschen (VORSICHT: Alle Messages gehen verloren!)
-docker-compose down -v
-
-# Neu starten
-docker-compose up -d
-```
-
-### Logs für Debugging
-
-**Scanner Logs:**
-```bash
-# Console Output ansehen
-python file_scanner.py /path --log-level DEBUG
-
-# Log-Datei ansehen
-cat file_scanner.log
-tail -f file_scanner.log  # Live-Monitoring
-```
-
-**RabbitMQ Logs:**
-```bash
-# Live logs
-docker-compose logs -f rabbitmq
-
-# Letzte 100 Zeilen
-docker-compose logs --tail=100 rabbitmq
-```
-
----
-
-## 📊 Nachrichtenformat
-
-Jede gesendete Nachricht enthält folgende Felder:
-
-```json
-{
-  "file_path": "/absolute/path/to/file.txt",
-  "file_name": "file.txt",
-  "file_extension": ".txt",
-  "file_size_bytes": 1024,
-  "file_size_human": "1.00 KB",
-  "created_time": "2024-11-29T10:30:00.123456",
-  "modified_time": "2024-11-29T12:45:00.654321",
-  "accessed_time": "2024-11-29T14:20:00.987654",
-  "is_symlink": false,
-  "scan_timestamp": "2024-12-02T15:00:00.111222",
-  "sha256_hash": "a3b2c1d4..."  // Nur wenn --calculate-hash verwendet
-}
-```
-
----
-
-## 🚦 Performance
-
-### Erwartete Leistung
-
-| Szenario | Dateien/Sekunde | Notizen |
-|----------|-----------------|---------|
-| Kleine Dateien (<1MB) | 500-1000 | SSD, kein Hash |
-| Mittlere Dateien (1-10MB) | 100-500 | SSD, kein Hash |
-| Mit Hash-Berechnung | 50-200 | Abhängig von Dateigröße |
-| Netzwerk-Filesystem | 10-100 | Stark abhängig von Latenz |
-
-### Optimierung für große Scans
-
-```bash
-# Ohne Hash für maximale Geschwindigkeit
-python file_scanner.py /large/dir
-
-# Nur bestimmte Extensions für weniger Dateien
-python file_scanner.py /large/dir --extensions .pdf .docx
-
-# Debug-Logs deaktivieren
-python file_scanner.py /large/dir --log-level WARNING
-```
-
----
-
-## 📚 Weitere Ressourcen
-
-- **STABILITY.md** - Detaillierte Erklärung der Stabilitäts-Features
-- **QUICKSTART.md** - Schnellreferenz-Guide
-- **Code-Kommentare** - Inline-Dokumentation im Source Code
-
 ---
 
 ## 🤝 Support
@@ -750,9 +427,8 @@ python file_scanner.py /large/dir --log-level WARNING
 Bei Fragen oder Problemen:
 
 1. **Logs prüfen**: `file_scanner.log` und `docker-compose logs`
-2. **README durchlesen**: Fehlerbehebung-Sektion
-3. **GitHub Issues**: (falls öffentliches Repository)
-4. **Email**: eneida.nordbakk@norcom.de (für NorCom-Bewerbung)
+2. **GitHub Issues**: (falls öffentliches Repository)
+3. **Email**: chan9908181@gmail.com (für NorCom-Bewerbung)
 
 ---
 
@@ -760,24 +436,8 @@ Bei Fragen oder Problemen:
 
 Dieses Projekt wurde als Coding-Challenge für **NorCom Information Technology GmbH** erstellt.
 
-**Entwickler:** [Ihr Name]  
-**Datum:** Dezember 2024  
-**Kontakt:** [Ihre Email]
+**Entwickler:** Chan-Young Lee  
+**Datum:** Dezember 2025
+**Kontakt:** chan9908181@gmail.com
 
 ---
-
-## ✅ Checkliste vor Einreichung
-
-- [ ] Alle Dateien vorhanden (11 Python-Dateien + Config)
-- [ ] `requirements.txt` installiert
-- [ ] Docker & Docker Compose installiert
-- [ ] RabbitMQ startet erfolgreich
-- [ ] Scanner läuft ohne Fehler
-- [ ] Nachrichten können gelesen werden
-- [ ] Tests durchgeführt
-- [ ] README vollständig gelesen
-- [ ] Git Repository erstellt (falls gewünscht)
-
----
-
-**Viel Erfolg mit der Bewerbung bei NorCom! 🚀**

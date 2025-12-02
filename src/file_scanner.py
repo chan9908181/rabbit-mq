@@ -12,10 +12,10 @@ import argparse
 from pathlib import Path
 from typing import Optional, List, Dict
 
-from src.file_info_extractor import FileInfoExtractor
-from src.rabbitmq_client import RabbitMQClient
-from src.directory_scanner import DirectoryScanner
-from src.logger_config import setup_logging
+from file_info_extractor import FileInfoExtractor
+from rabbitmq_client import RabbitMQClient
+from directory_scanner import DirectoryScanner
+from logger_config import setup_logging
 
 
 class FileScannerApp:
@@ -151,7 +151,7 @@ def parse_arguments() -> argparse.Namespace:
     
     parser.add_argument(
         '--log-level',
-        default='INFO',
+        default='DEBUG',
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
         help='Logging level (default: INFO)'
     )
@@ -165,6 +165,9 @@ def main():
     
     # Setup logging
     setup_logging(args.log_level)
+    
+    # Get project root (parent of src directory)
+    project_root = Path(__file__).parent.parent.resolve()
     
     # Initialize components
     rabbitmq_client = RabbitMQClient(
@@ -190,9 +193,14 @@ def main():
     
     # Scan each directory
     for directory in args.input_dirs:
-        logging.info(f"Starting scan of: {directory}")
+        # Resolve path relative to project root if it's not absolute
+        dir_path = Path(directory)
+        if not dir_path.is_absolute():
+            dir_path = project_root / directory
+        
+        logging.info(f"Starting scan of: {dir_path}")
         app.run(
-            root_path=directory,
+            root_path=str(dir_path),
             file_extensions=args.extensions
         )
 
