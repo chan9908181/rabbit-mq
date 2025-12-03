@@ -35,7 +35,7 @@ Entwickelt als Lösung für die Coding-Challenge von **NorCom Information Techno
 ### Schritt 1: Projekt herunterladen
 
 ```bash
-git clone https://github.com/chan9908181/file-scanner-rabbitmq.git
+git clone https://github.com/chan9908181/rabbit-mq.git
 cd file-scanner-rabbitmq
 ```
 
