@@ -7,3 +7,4 @@ venv/
 test_files/
 test_files1/
 test_files2/
+src/file_scanner.log

@@ -111,10 +111,17 @@ class DirectoryScanner:
         """
         try:
             # Filter by extension if specified
-            if file_extensions and entry.suffix.lower() not in file_extensions:
-                self._files_skipped += 1
-                self.logger.debug(f"Skipped (extension filter): {entry}")
-                return
+            if file_extensions:
+                # Normalize extension (add dot if missing)
+                normalized_extensions = [
+                    ext if ext.startswith('.') else f'.{ext}' 
+                    for ext in file_extensions
+                ]
+                
+                if entry.suffix.lower() not in normalized_extensions:
+                    self._files_skipped += 1
+                    self.logger.debug(f"Skipped (extension filter): {entry}")
+                    return
             
             # Process file
             success = file_callback(entry)

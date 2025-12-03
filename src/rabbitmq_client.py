@@ -21,7 +21,7 @@ class RabbitMQClient:
         password: str = 'guest',
         queue_name: str = 'file_scan_queue',
         exchange_name: str = '',
-        max_retries: int = 3,
+        max_retries: int = 10,
         heartbeat_check_interval: int = 100  # Check connection every N messages
     ):
         """
@@ -51,7 +51,6 @@ class RabbitMQClient:
         self.logger = logging.getLogger(__name__)
         
         self._message_count = 0
-        self._last_heartbeat = time.time()
     
     def connect(self) -> bool:
         """
@@ -128,6 +127,9 @@ class RabbitMQClient:
         if self._message_count % self.heartbeat_check_interval == 0:
             self._ensure_connection_alive()
         
+        file_path = message.get('file_path', 'unknown')
+
+        
         try:
             message_body = json.dumps(message, indent=2)
             
@@ -143,8 +145,6 @@ class RabbitMQClient:
                     ),
                     mandatory=True
                 )
-                # Message confirmed by broker
-                self._last_heartbeat = time.time()
                 return True
                 
             except pika.exceptions.UnroutableError:
@@ -152,7 +152,7 @@ class RabbitMQClient:
                 return False
             
         except (AMQPConnectionError, AMQPChannelError) as e:
-            self.logger.error(f"Failed to publish message: {e}")
+            self.logger.error(f"Failed to publish message for file {file_path}: {e}")
             
             # Attempt to reconnect
             self.logger.info("Attempting to reconnect...")
