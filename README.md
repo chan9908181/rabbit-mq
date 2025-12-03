@@ -36,7 +36,7 @@ Entwickelt als Lösung für die Coding-Challenge von **NorCom Information Techno
 
 ```bash
 git clone https://github.com/chan9908181/rabbit-mq.git
-cd file-scanner-rabbitmq
+cd rabbit-mq
 ```
 
 ### Schritt 2: Python Dependencies installieren
