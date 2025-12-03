@@ -9,7 +9,6 @@ Entwickelt als Lösung für die Coding-Challenge von **NorCom Information Techno
 ---
 
 ## Inhaltsverzeichnis
-
 1. [Funktionen](#funktionen)
 2. [Installation](#installation)
 3. [Schnellstart](#schnellstart)
@@ -36,7 +35,7 @@ Entwickelt als Lösung für die Coding-Challenge von **NorCom Information Techno
 ### Schritt 1: Projekt herunterladen
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/file-scanner-rabbitmq.git
+git clone https://github.com/chan9908181/file-scanner-rabbitmq.git
 cd file-scanner-rabbitmq
 ```
 
@@ -64,13 +63,6 @@ Was wird installiert:
 ```bash
 # RabbitMQ Container starten (im Hintergrund)
 docker-compose up -d
-
-# Status prüfen
-docker-compose ps
-
-# Sollte zeigen:
-# NAME                    STATUS    PORTS
-# file_scanner_rabbitmq   Up        0.0.0.0:5672->5672/tcp, 0.0.0.0:15672->15672/tcp
 ```
 
 RabbitMQ Zugang:
@@ -210,7 +202,7 @@ Note: Messages were not removed from queue (use --acknowledge flag to remove)
 
 ```bash
 # Browser öffnen
-open http://localhost:15672  # macOS
+open http://localhost:15672 
 # Login: guest / guest
 # Navigation: Queues → file_scan_queue → Get messages
 ```
@@ -241,13 +233,4 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 ```
-
-Dann Programm mit neuen Credentials starten:
-
-```bash
-python file_scanner.py /path \
-  --rabbitmq-user myuser \
-  --rabbitmq-password mypassword
-```
-
 ---
