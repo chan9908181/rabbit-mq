@@ -62,7 +62,7 @@ Was wird installiert:
 
 ```bash
 # RabbitMQ Container starten (im Hintergrund)
-docker-compose up -d
+docker compose up -d
 ```
 
 RabbitMQ Zugang:
@@ -226,10 +226,8 @@ services:
       - "5672:5672"   # AMQP Port
       - "15672:15672" # Management UI
     environment:
-      RABBITMQ_DEFAULT_USER: myuser      # Hier ändern
-      RABBITMQ_DEFAULT_PASS: mypassword  # Hier ändern
-      # Optional: Memory Limits für große Scans
-      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.8
+      RABBITMQ_DEFAULT_USER: guest      # Hier ändern
+      RABBITMQ_DEFAULT_PASS: guest  # Hier ändern
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 ```

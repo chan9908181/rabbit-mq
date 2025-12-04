@@ -44,13 +44,14 @@ echo ""
 echo "🧹 Cleaning up test files and stopping RabbitMQ..."
 cd ../../
 rm -rf test_files
-docker compose down
+
 
 echo "============================================"
-echo "✅ Test run completed successfully!"
+echo "Test run completed successfully!"
 echo "============================================"
 echo ""
 echo "Next steps:"
 echo "  - Check file_scanner.log for detailed logs"
 echo "  - Visit http://localhost:15672 for RabbitMQ UI"
 echo "  - Run 'python read_messages.py --count 20' to see more messages"
+echo " run docker compose down to stop RabbitMQ"
